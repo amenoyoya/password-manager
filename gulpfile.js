@@ -2,6 +2,7 @@
 const gulp = require('gulp');
 const webserver = require('gulp-webserver');
 const sass = require('gulp-sass');
+const exec = require('child_process').exec;
 
 // `sass`タスク
 // bulma.sassをbulma.cssに変換
@@ -27,7 +28,6 @@ gulp.task('sass-watch', function(done) {
 
 // `webserver`タスク
 // ./dist/ディレクトリをローカルサーバーで公開
-// `sass-watch`タスクも含める
 gulp.task('webserver', function(done) {
   gulp
     .src('./dist')
@@ -41,6 +41,17 @@ gulp.task('webserver', function(done) {
   //done();
 });
 
+// `apiserver`タスク
+// ./api/app.pyを実行（ローカルAPIサーバー実行）
+gulp.task('apiserver', function(done) {
+  exec('activate py36');
+  // flaskは localhost:5000 で実行される
+  exec('python ./api/app.py', function(err, stdout, stderr) {
+    console.log(stdout);
+    console.error(stderr);
+  });
+});
+
 // `default`タスク: gulpコマンドで呼び出されるタスク
-// `sass-watch`, `webserver`タスクを並列実行
-gulp.task('default', gulp.parallel('sass-watch', 'webserver'));
+// `sass-watch`, `webserver`, `apiserver`タスクを並列実行
+gulp.task('default', gulp.parallel('sass-watch', 'webserver', 'apiserver'));

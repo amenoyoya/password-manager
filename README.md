@@ -8,6 +8,9 @@
     - パッケージマネージャ: `yarn`
 - CSSフレームワーク:
   - bulma: `0.7.4`
+- APIサーバー:
+  - python: `3.6.7`
+    - フレームワーク: `flask`
 
 ***
 
@@ -33,6 +36,7 @@ Local version: 4.0.1 # Gulp4系を使用
 const gulp = require('gulp');
 const webserver = require('gulp-webserver');
 const sass = require('gulp-sass');
+const exec = require('child_process').exec;
 
 // `sass`タスク
 // bulma.sassをbulma.cssに変換
@@ -58,7 +62,6 @@ gulp.task('sass-watch', function(done) {
 
 // `webserver`タスク
 // ./dist/ディレクトリをローカルサーバーで公開
-// `sass-watch`タスクも含める
 gulp.task('webserver', function(done) {
   gulp
     .src('./dist')
@@ -72,11 +75,21 @@ gulp.task('webserver', function(done) {
   //done();
 });
 
+// `apiserver`タスク
+// ./api/app.pyを実行（ローカルAPIサーバー実行）
+gulp.task('apiserver', function(done) {
+  // flaskは localhost:5000 で実行される
+  exec('python ./api/app.py', function(err, stdout, stderr) {
+    console.log(stdout);
+    console.error(stderr);
+  });
+});
+
 // `default`タスク: gulpコマンドで呼び出されるタスク
-// `sass-watch`, `webserver`タスクを並列実行
-gulp.task('default', gulp.parallel('sass-watch', 'webserver'));
+// `sass-watch`, `webserver`, `apiserver`タスクを並列実行
+gulp.task('default', gulp.parallel('sass-watch', 'webserver', 'apiserver'));
 ```
 
 以上の設定により `yarn gulp` でローカルサーバー（ファイル保存時にブラウザ自動更新）を実行できるようになる
 
-また、並列的にsassの自動コンパイルも行われる
+また、並列的にPython(Flask)のAPIサーバーの起動, sassの自動コンパイルも行われる
