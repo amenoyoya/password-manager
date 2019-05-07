@@ -3,5 +3,8 @@
     "gulp": "^4.0.1",
     "gulp-sass": "^4.0.2",
     "gulp-webserver": "^0.9.1"
+  },
+  "scripts": {
+    "createdb": "python api/data/createdb.py"
   }
 }
