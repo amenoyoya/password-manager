@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, request, jsonify
 from flask_login import login_user, logout_user
 
 # Flaskサーバーアプリケーションの作成
@@ -9,13 +9,22 @@ def login():
   try:
     if request.form['username'] == 'user' and request.form['password'] == 'password':
       login_user('user')
-  except:
-    response = {
+      return jsonify({
+        'success': True,
+        'Content-Type': 'application/json',
+        'message': 'Succeeded to login'
+      })
+    return jsonify({
       'success': False,
       'Content-Type': 'application/json',
-      'data': 'Hello, world'
-    }
-    return flask.jsonify(response)
+      'message': 'Invalid user name or password'
+    })
+  except:
+    return jsonify({
+      'success': False,
+      'Content-Type': 'application/json',
+      'data': 'Failed to login'
+    })
 
 if __name__ == '__main__':
   # Flaskサーバー実行
