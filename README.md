@@ -20,8 +20,9 @@
 ```bash
 # Gulpとプラグインをインストール
 ## Sassコンパイル用: gulp-sass
+## Pugコンパイル用: gulp-pug
 ## ローカルサーバー用: gulp-webserver
-$ yarn add -D gulp gulp-sass gulp-webserver
+$ yarn add -D gulp gulp-sass gulp-pug gulp-webserver
 
 # Gulpバージョン確認
 $ yarn gulp --version
@@ -36,6 +37,7 @@ Local version: 4.0.1 # Gulp4系を使用
 const gulp = require('gulp');
 const webserver = require('gulp-webserver');
 const sass = require('gulp-sass');
+const pug = require('gulp-pug');
 const exec = require('child_process').exec;
 
 // `sass`タスク
@@ -60,6 +62,22 @@ gulp.task('sass-watch', function(done) {
   //done();
 });
 
+// `pug`タスク
+// pugをhtmlに変換
+gulp.task('pug', function(done) {
+  gulp.src('./pug/**/*.pug')
+    .pipe(pug({pretty: true}))
+    .pipe(gulp.dest('./dist/'));
+  done();
+});
+
+// `pug-watch`タスク
+// pugファイルを監視し、`pug`タスクを実行する
+gulp.task('pug-watch', function(done) {
+  var watcher = gulp.watch('./pug/**/*.pug', gulp.task('pug'));
+  watcher.on('change', function(event) {});
+});
+
 // `webserver`タスク
 // ./dist/ディレクトリをローカルサーバーで公開
 gulp.task('webserver', function(done) {
@@ -70,9 +88,6 @@ gulp.task('webserver', function(done) {
       open: true, // ブラウザで自動的に開く
       port: 8000, // ポート8000番を使用
     }));
-  
-  // ローカルサーバーは実行し続けるため、doneを呼び出す必要はない
-  //done();
 });
 
 // `apiserver`タスク
@@ -86,8 +101,8 @@ gulp.task('apiserver', function(done) {
 });
 
 // `default`タスク: gulpコマンドで呼び出されるタスク
-// `sass-watch`, `webserver`, `apiserver`タスクを並列実行
-gulp.task('default', gulp.parallel('sass-watch', 'webserver', 'apiserver'));
+// `sass-watch`, `pug-watch`, `webserver`, `apiserver`タスクを並列実行
+gulp.task('default', gulp.parallel('sass-watch', 'pug-watch', 'webserver', 'apiserver'));
 ```
 
 以上の設定により `yarn gulp` でローカルサーバー（ファイル保存時にブラウザ自動更新）を実行できるようになる

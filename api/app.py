@@ -7,6 +7,7 @@ class User(UserMixin):
 
 # Flaskサーバーアプリケーションの作成
 app = Flask(__name__)
+app.config['JSON_AS_ASCII'] = False # JSONデータで日本語使用可能に
 
 # セッションを使うためにシークレットキーが必要
 app.secret_key = 'secret key'
