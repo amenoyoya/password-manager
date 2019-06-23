@@ -17,3 +17,4 @@
     - python: `3.6.7`
     - Framework:
         - flask: `1.0.2`
+        - flask-cors: `3.0.8`

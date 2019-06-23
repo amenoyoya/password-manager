@@ -9,6 +9,7 @@ License: MIT License
 '''
 from libs.frasco import g, request, Frasco, Response
 from libs.sqldb import SqlDB
+from flask_cors import CORS
 import os, json, hashlib
 
 class AuthUser:
@@ -65,6 +66,8 @@ DATABASE = os.path.join(os.path.dirname(__file__), 'database', 'password.db')
 
 # Flaskアプリケーション
 app = Frasco(__name__, User=AuthUser)
+# Cross-Origin Resource Sharing 有効化
+CORS(app)
 
 # Databaseのconnectionを取得
 def get_db():

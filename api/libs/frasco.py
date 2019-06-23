@@ -10,6 +10,14 @@ import flask, os
 from flask import Flask, render_template, jsonify, session, request, g
 from functools import wraps
 
+class Request:
+    ''' Request class '''
+    @staticmethod
+    def data():
+        if request.headers['Content-Type'][:16] == 'application/json':
+            return request.json
+        return request.form
+
 class Response:
     ''' Response class '''
     @staticmethod
@@ -157,7 +165,7 @@ class Frasco(Flask):
             @wraps(func) # デコレートした関数名が`wrapper`になるのを防ぐ: ルーティングを複数定義したときルートが上書きされるのを防ぐ
             def wrapper():
                 # POSTデータから認証処理実行
-                user = self.AuthUser.auth(request.form)
+                user = self.AuthUser.auth(Request.data())
                 if user is not None:
                     # セッションID保存
                     session['auth'] = self.AuthUser.save(user)
