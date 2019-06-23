@@ -90,14 +90,18 @@ def get_info():
         'where': {'user_id': app.current_user['id']}
     })
     for category in categories:
-        res[category['category']] = db.get_rows('category_passwords', {
-            'select': ['service', 'username', 'password', 'remarks'],
+        rows = db.get_rows('category_passwords', {
+            'select': ['id', 'service', 'username', 'password', 'remarks'],
             'where': {'=': {'category_id': category['id']}}
         })
         # service と username だけ暗号化解除する
-        for row in res[category['category']]:
+        for row in rows:
             row['service'] = decrypt(row['service'])
             row['username'] = decrypt(row['username'])
+        res[category['id']] = {
+            'category': category['category'],
+            'data': rows
+        }
     return Response.json(res)
 
 # password と remarks の暗号化解除
@@ -137,11 +141,11 @@ def get_data(db, id):
 @app.secret(Response.text('Unauthenticated\n', 401))
 def insert_data():
     category_id = request.form.get('category_id')
-    service = request.form.get('service')
+    service = request.form.get('service', '')
     username = request.form.get('username', '')
     password = request.form.get('password', '')
     remarks = request.form.get('remarks', '')
-    if category_id is None or service is None:
+    if category_id is None or service == '':
         # カテゴリーID, サービス名は必須
         return Response.text('Require `category_id` and `service`\n', 400)
     db = get_db()
@@ -161,11 +165,11 @@ def insert_data():
 @app.put('/<int:data_id>')
 @app.secret(Response.text('Unauthenticated\n', 401))
 def update_data(data_id):
-    service = request.form.get('service')
+    service = request.form.get('service', '')
     username = request.form.get('username', '')
     password = request.form.get('password', '')
     remarks = request.form.get('remarks', '')
-    if service is None:
+    if service == '':
         # サービス名は必須
         return Response.text('Require `service`\n', 400)
     db = get_db()
@@ -207,6 +211,81 @@ def delete_data(data_id):
     if count == 0:
         return Response.text('Failed to delete data\n', 500)
     return Response.text('Succeeded to delete data\n')
+
+# カテゴリー名が存在するか確認
+def is_category_exists(db, category):
+    categories = db.get_rows('user_categories', {
+        'where': {
+            'and': [
+                {'=': {'user_id': app.current_user['id']}},
+                {'=': {'category': category}}
+            ]
+        }
+    })
+    if categories and len(categories) > 0:
+        return True
+    return False
+
+# 新規カテゴリー追加
+@app.post('/category')
+@app.secret(Response.text('Unauthenticated\n', 401))
+def insert_category():
+    category = request.form.get('category', '')
+    if category == '':
+        # カテゴリー名は必須
+        return Response.text('Require `category`\n', 400)
+    db = get_db()
+    # カテゴリー名の重複を許可しない
+    if is_category_exists(db, category):
+        return Response.text('Category already exists\n', 400)
+    # カテゴリー追加
+    count = db.insert_rows('user_categories', [
+        ['user_id', 'category'],
+        [app.current_user['id'], category]
+    ])
+    if count == 0:
+        return Response.text('Failed to insert category\n', 500)
+    return Response.text('Succeeded to insert category\n', 201)
+
+# カテゴリー名修正
+@app.put('/category/<int:category_id>')
+@app.secret(Response.text('Unauthenticated\n', 401))
+def update_category(category_id):
+    category = request.form.get('category', '')
+    if category == '':
+        # カテゴリー名は必須
+        return Response.text('Require `category`\n', 400)
+    db = get_db()
+    # カテゴリー名の重複を許可しない
+    if is_category_exists(db, category):
+        return Response.text('Category already exists\n', 400)
+    # カテゴリーの所有ユーザーか確認
+    if not is_correct_category(db, category_id):
+        return Response.text('Invalid `category_id`\n', 400)
+    # カテゴリー修正
+    count = db.update_rows('user_categories', {
+        'values': {'category': category},
+        'where': {'=': {'id': category_id}}
+    })
+    if count == 0:
+        return Response.text('Failed to update category\n', 500)
+    return Response.text('Succeeded to update category\n')
+
+# カテゴリー削除
+@app.delete('/category/<int:category_id>')
+@app.secret(Response.text('Unauthenticated\n', 401))
+def delete_category(category_id):
+    db = get_db()
+    # カテゴリーの所有ユーザーか確認
+    if not is_correct_category(db, category_id):
+        return Response.text('Invalid `category_id`\n', 400)
+    # カテゴリー削除
+    count = db.delete_rows('user_categories', {'where': {'=': {'id': category_id}}})
+    if count == 0:
+        return Response.text('Failed to delete category\n', 500)
+    # カテゴリーに紐づくパスワード情報も削除
+    count = db.delete_rows('category_passwords', {'where': {'=': {'category_id': category_id}}})
+    return Response.text('Delete category\'s data: ' + str(count) + '\n')
 
 # Flaskサーバー実行
 if __name__ == "__main__":

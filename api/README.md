@@ -35,10 +35,19 @@
         - 200: パスワード情報
             ```json
             {
-                "カテゴリー名": [
-                    ["サービス名", "ユーザー名", "パスワード（暗号化済）", "備考（暗号化済）"],
-                    ...
-                ],
+                "カテゴリーID": {
+                    "category": "カテゴリー名",
+                    "data": [
+                        {
+                            "id": データID,
+                            "service": "サービス名",
+                            "username": "ユーザー名",
+                            "password": "パスワード（暗号化済）",
+                            "remarks": "備考（暗号化済）"
+                        },
+                        ...
+                    ]
+                },
                 ...
             }
             ```
@@ -126,4 +135,56 @@
     - Usage:
         ```bash
         $ curl -b cookie -X DELETE http://localhost:4000/データID
+        ```
+
+---
+
+### Password Category Manager
+- **Insert Category**
+    - URL: POST http://localhost:4000/category
+    - Requirement:
+        - Authentication
+    - Request:
+        - category: `カテゴリー名` (必須)
+    - Response:
+        - 201: `Succeeded to insert category`
+        - 400:
+            - `Require 'category'` (必須項目が入力されていない)
+            - `Category already exists` (すでに存在するカテゴリー名)
+        - 401: `Unauthenticated` (未認証)
+        - 500: `Failed to insert category`
+    - Usage:
+        ```bash
+        $ curl -b cookie -X POST -d 'category=カテゴリー名' http://localhost:4000/category
+        ```
+- **Update Category**
+    - URL: PUT http://localhost:4000/category/:category_id
+    - Requirement:
+        - Authentication
+    - Request:
+        - category: `カテゴリー名` (必須)
+    - Response:
+        - 200: `Succeeded to update category`
+        - 400:
+            - `Require 'category'` (必須項目が入力されていない)
+            - `Category already exists` (すでに存在するカテゴリー名)
+            - `Invalid 'category_id'` (ログインユーザー所有のカテゴリーIDではない)
+        - 401: `Unauthenticated` (未認証)
+        - 500: `Failed to update category`
+    - Usage:
+        ```bash
+        $ curl -b cookie -X PUT -d 'category=カテゴリー名' http://localhost:4000/category/カテゴリーID
+        ```
+- **Delete Category**
+    - URL: DELETE http://localhost:4000/category/:category_id
+    - Requirement:
+        - Authentication
+    - Response:
+        - 200: `Delete category's data: ${data_count}`
+        - 400: `Invalid 'category_id'` (ログインユーザー所有のカテゴリーIDではない)
+        - 401: `Unauthenticated` (未認証)
+        - 500: `Failed to delete category`
+    - Usage:
+        ```bash
+        $ curl -b cookie -X DELETE http://localhost:4000/category/カテゴリーID
         ```
